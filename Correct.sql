@@ -259,7 +259,6 @@ CREATE OR REPLACE FUNCTION update_note(
   _note_password VARCHAR(255),
   _note_link VARCHAR(255),
   _note_data TEXT,
-  _note_created_by uuid,
   _is_available_for_public BOOLEAN,
   _user_id uuid
 ) RETURNS VOID AS $$

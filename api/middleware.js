@@ -18,3 +18,7 @@ function BEREAR_TOKEN_MIDDLEWARE(req,res,next){
         res.status(401).send('Access denied.');
     })
 }
+
+module.exports = {
+    BEREAR_TOKEN_MIDDLEWARE,
+}

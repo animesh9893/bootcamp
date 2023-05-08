@@ -25,7 +25,7 @@ function GetUserId(req) {
 // Set up the multer storage engine and file filter
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadPath = path.resolve(__dirname, "..", "uploads");
+    const uploadPath = path.resolve(__dirname, "..", "uploads/profile");
     cb(null, uploadPath);
   },
   filename: function (req, file, cb) {
@@ -90,7 +90,7 @@ function GetProfileImageRoute(req, res) {
   const imagePath = `${path.resolve(
     __dirname,
     "..",
-    "uploads"
+    "uploads/profile"
   )}/${userId}.jpeg`;
 
   IsFileExist(imagePath)
@@ -106,4 +106,8 @@ module.exports = {
   SetProfileImageRoute,
   SetProfileImageMiddleware: upload.single("file"),
   GetProfileImageRoute,
+
+  Function : {
+    GetUserId,
+  }
 };
