@@ -1,5 +1,5 @@
 const USER = require("./user").Function;
-
+const fs = require('fs');
 
 function BEREAR_TOKEN_MIDDLEWARE(req,res,next){
     const authHeader = req.headers["authorization"];
@@ -19,6 +19,30 @@ function BEREAR_TOKEN_MIDDLEWARE(req,res,next){
     })
 }
 
+
+
+// Middleware function
+function requestLogger(req, res, next) {
+  const logMessage = `${new Date().toISOString()} - ${req.method} ${req.url} header - ${JSON.stringify(req.headers)}\n`;
+
+  // Log the request to the console
+  console.log(logMessage);
+
+  // Append the log message to a log file
+  fs.appendFile('request.log', logMessage, (err) => {
+    if (err) {
+      console.error('Error writing to log file:', err);
+    }
+  });
+
+  // Move to the next middleware
+  next();
+}
+
+module.exports = requestLogger;
+
+
 module.exports = {
     BEREAR_TOKEN_MIDDLEWARE,
+    LOGGER : requestLogger,
 }
