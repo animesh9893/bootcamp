@@ -3,6 +3,56 @@ import axios from 'axios';
 import { BASE_URL } from "../constant";
 import { useNavigate } from "react-router-dom";
 
+
+export function ResetRequest(props){
+    const [email,setEmail] = useState("")
+    const [message,setMessage] = useState("");
+    function requestReset(e){
+        e.preventDefault();
+        axios.post(`${BASE_URL}/resetpassword`,{email:email},{
+            headers:{
+                "Content-Type":"application/json"
+            }
+        }).then(()=>{
+            setMessage("check mail");
+        }).catch(()=>{
+            setMessage("something went wrong");
+        })
+    }
+
+    return (
+        <div>
+            {message}
+            <br/>
+            email : <input type="text" value={email} onChange={(e)=>setEmail(e.target.value)} />
+            <button onClick={requestReset}>Submit</button>
+        </div>
+    )
+}
+
+export function ResetPassword(props){
+    const [password,setPassword] = useState("");
+    const navigate = useNavigate();
+
+    function save(e){
+        e.preventDefault();
+        axios.post(`${BASE_URL}/resetpassword/done`,{
+            password,token:window.location.href.split("/").reduce((acc,curr)=>{return curr},""),
+        }).then(()=>{
+            navigate("/");
+        })
+    }
+
+
+    return (
+        <div>
+            New Password : <input type="password" onChange={(e)=>setPassword(e.target.value)} value={password}/>
+            <button onClick={save}>Change</button>
+        </div>
+    )
+}
+
+
 export default function SignUp(props) {
     const navigate = useNavigate();
     const [data,setData] = useState({

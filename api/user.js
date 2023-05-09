@@ -88,6 +88,29 @@ function IsUserExist(email, password) {
   return CONSTANT.DB_OBJECT.query(query, [email, password]);
 }
 
+function CreateUser(name="temp", email, password="temp", profileImage=""){
+  const query = `SELECT insert_user('${name}','${email}','${password}','${profileImage}')`;
+
+  return CONSTANT.DB_OBJECT.query(query, (err, result) => {
+    if (err) {
+      throw "error"
+    } else {
+      let id = result.rows[0].insert_user;
+
+      let tokenResponse = GenerateToken(id, "BEREAR_TOKEN");
+
+      tokenResponse.promise
+        .then(() => {
+          let token = tokenResponse.token;
+          return {token,id};
+        })
+        .catch(() => {
+          throw "Error"
+        });
+    }
+  });
+}
+
 function CreateUserRoute(req, res) {
   const { name, email, password, profileImage } = req.body;
 
@@ -228,10 +251,12 @@ function ResetPassword(password,token){
 
 function ResetPasswordRoute(req,res){
   const {email,password,token} = req.body;
-
+  console.log("reset password of token",token)
   ResetPassword(password,token)
     .then((result)=>{
-      res.status(200)
+      res.status(200).send();
+    }).catch(()=>{
+      res.status(500).send();
     })
 }
 
@@ -244,6 +269,11 @@ module.exports = {
   IsTokenExpiredRoute,
   ValidateUserRoute,
   ResetPasswordRequestRoute,
+  ResetPasswordRoute,
+
+
+  CreateUserFunction:CreateUser,
+
   Function : {
     CheckTokenExist,
     UpdateUser,

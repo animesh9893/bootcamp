@@ -47,14 +47,28 @@ function Home(props){
     useEffect(()=>{
         const obj = JSON.parse(localStorage.getItem("data"))
 
-        axios.get(`${BASE_URL}/note/public`,{
+        axios.post(`${BASE_URL}/note/createdNote`,{
+            userId:obj.id,
+        },{
             headers:{
                 "Authorization":`Bearer ${obj.id} ${obj.token}`
             }
         }).then((result)=>{
-            // console.log(result)
-            setNotes(result.data.data || []);
+            console.log(result)
+            setNotes(result.data.data);
         })
+
+
+        axios.post(`${BASE_URL}/note/sharedNote`,{
+            userId:obj.id,
+        },{
+            headers:{
+                "Authorization":`Bearer ${obj.id} ${obj.token}`
+            }
+        }).then((result)=>{
+            console.log("SHARED ",result)
+        })
+
 
         console.log("data",notes)
     },[])
@@ -62,7 +76,10 @@ function Home(props){
 
     return (
         <div>
-            <div>Public Note</div>
+            <div>Created  Note <div>Earning : ${notes.reduce((acc,curr)=>{
+                acc += curr.vote;
+                return acc;                
+            },0)}</div></div>
             {
                 notes.map((item)=>(
                     <Note key={item.note_id || "1"} {...item} />

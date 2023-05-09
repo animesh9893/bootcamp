@@ -12,7 +12,6 @@ function Note(props){
     const [tempPassword,setTempPassword] = useState("");
     const [editAllowed,setEditAllowed] = useState(false);
 
-
     useEffect(()=>{
         const urlPart = window.location.href.split("/");
 
@@ -57,7 +56,6 @@ function Note(props){
         })
     }
 
-
     return (
         <div>
             <div>Note of {id}</div>
@@ -89,35 +87,254 @@ function Note(props){
             {
                 editAllowed && <EditNote data = {data} id={id}/>
             }
+            
         </div>
     )
 }
 
-function ShowNote(props){
+function replaceUrls(string) {
+    const regex = /\[\[\[(.*?)\]\]\]/g;
+    return string.replace(regex, '<img src="$1" alt="image" />');
+  }
+  
+  function RenderHTMLString({ htmlString }) {
+    console.log("HTML string",htmlString)
+    return (
+      <div dangerouslySetInnerHTML={{ __html: htmlString }} />
+    );
+  }
+
+
+export function ShowNote(props){
+    console.log("props",props);
+    const navigate = useNavigate();
+
+    function toCSV(e){
+        e.preventDefault();
+        axios.post(`${BASE_URL}/toCSV`,{
+            noteId:props.note_id,
+        },{
+            headers:{
+                "Authorization":`Berear ${JSON.parse(localStorage.getItem("data")).id} ${JSON.parse(localStorage.getItem("data")).token}` 
+            }
+        }).then(()=>{
+            console.log("done")
+        })
+    }
+
     return (
         <div>
             {
                 Object.keys(props).map((key)=>{
+                    if(key==="note_created_by"){
+                        return <div>id : {props[key]} <button onClick={()=>navigate(`/profile/${props[key]}`)}>Profile</button></div>
+                    }
                     if(key!="note_password")
-                        return <div>{key} : {String(props[key])}</div>
+                        {
+                            return <div>{key} : <RenderHTMLString htmlString={replaceUrls(String(props[key]))} /></div>
+                        }
                 })
             }
+
+            <div>
+                To CSV : <button onClick={toCSV}>TO CSV</button>
+            </div>
         </div>
     )
 }
 
 
-function EditNote(props){
+export function UploadProfilePic(props) {
+    const [data, setData] = useState({
+        file: {},
+    });
+
+    function handleFile(e) {
+        console.log(e.target?.files);
+        setData({ ...data, file: e.target?.files[0] });
+    }
+
+    function save(e) {
+        const formData = new FormData();
+        formData.append('file', data?.file);
+        formData.append('noteId', props.note_id);
+        
+        let config = {
+            method: 'post',
+            url: `${BASE_URL}/note/extrafile`,
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                'Access-Control-Allow-Origin': '*',
+                'Authorization': `Berear ${JSON.parse(localStorage.getItem("data")).id} ${JSON.parse(localStorage.getItem("data")).token}` 
+            },
+            data: formData,
+        };
+
+        axios(config)
+            .then((response) => {
+                console.log("done");
+                props?.setData(response.data.data.url);
+            })
+            .catch((e) => {
+                console.log('Error hai bhai', e);
+            });
+    }
+
+    return (
+        <div>
+            <input
+                type='file'
+                accept='image/*'
+                onChange={(e) => handleFile(e)}
+            />
+            <button variant="dark" onClick={(e) => save(e)}>Upload image</button>
+        </div>
+    );
+}
+
+
+
+export function UploadCSV(props) {
+    const [data, setData] = useState({
+        file: {},
+    });
+
+    function handleFile(e) {
+        console.log(e.target?.files);
+        setData({ ...data, file: e.target?.files[0] });
+    }
+
+    function save(e) {
+        const formData = new FormData();
+        formData.append('file', data?.file);
+        
+        let config = {
+            method: 'post',
+            url: `${BASE_URL}/csvTojson`,
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                'Access-Control-Allow-Origin': '*',
+                'Authorization': `Berear ${JSON.parse(localStorage.getItem("data")).id} ${JSON.parse(localStorage.getItem("data")).token}` 
+            },
+            data: formData,
+        };
+
+        axios(config)
+            .then((response) => {
+                console.log("done");
+                props?.setData(JSON.stringify(response.data));
+            })
+            .catch((e) => {
+                console.log('Error hai bhai', e);
+            });
+    }
+
+    return (
+        <div>
+            <input
+                type='file'
+                accept='image/*'
+                onChange={(e) => handleFile(e)}
+            />
+            <button variant="dark" onClick={(e) => save(e)}>Upload CSV</button>
+        </div>
+    );
+}
+
+export function EditNote(props){
     const [data,setData] = useState(props?.data || {});
+    const [addFile,setAddFile] = useState("");
+
+    const [share,setShare] = useState("");
+    const [right,setRight] = useState("");
+
+    const [csvData,setCSVdata] = useState("");
+    const navigate = useNavigate();
 
     useEffect(()=>{
         setData(props.data);
     },[])
 
+    useEffect(()=>{
+        if(addFile!=""){
+            setData({...data,note_data:`${data.note_data} [[[${addFile}]]]`});
+            setAddFile("");
+        }
+    },[addFile])
+
+    function save(e){
+        e.preventDefault();
+
+        console.log("saving ",data);
+
+        if(data.note_is_protected===true && data.note_password===""){
+            console.log("please enter password");
+            return ;
+        }
+
+        axios.post(`${BASE_URL}/note/update`,{
+            noteId:data.note_id, name:data.note_name, 
+            type:data.note_type, isProtected:data.note_is_protected, 
+            password:data.note_password, link:"", data:data.note_data, 
+            isPublic:data.is_available_for_public,
+        },{
+            headers:{
+                'Authorization': `Berear ${JSON.parse(localStorage.getItem("data")).id} ${JSON.parse(localStorage.getItem("data")).token}` 
+            }
+        }).then(()=>{
+            window.location.reload(false);
+        }).catch((err)=>{
+            console.log("error in updating",err);
+        })
+    }
+
+    function shareNote(e){
+        e.preventDefault();
+
+        axios.post(`${BASE_URL}/note/share/add`,{
+            email:share,noteId:data.note_id,access:right
+        },{
+            headers:{
+                'Authorization': `Berear ${JSON.parse(localStorage.getItem("data")).id} ${JSON.parse(localStorage.getItem("data")).token}` 
+            }
+        }).then(()=>{
+            console.log("sent");
+        }).catch(()=>{
+            console.log("error");
+        })
+    }
+
+    useEffect(()=>{
+        setData({...data,note_data:data.note_data+` ${csvData}`});
+    },[csvData])
+
+
+    function saveToDraft(e){
+        e.preventDefault();
+        localStorage.setItem(`${data.note_id}`,JSON.stringify(data));
+        navigate("/")
+    }
+
+    function loadDraft(e){
+        e.preventDefault();
+        setData(JSON.parse(localStorage.getItem(`${data.note_id}`)))
+    }
+
     return (
         <div>
-            {JSON.stringify(props)}
             <div>Id : {data.note_id}</div>
+
+            <div>
+                email : <input type="email" value={share} onChange={(e)=>setShare(e.target.value)} />
+                Right (write/owner/read) <input type="text" value={right} onChange={(e)=>setRight(e.target.value)} />
+                <button onClick={shareNote}>Share</button>
+            </div>
+
+            <div>
+                Add data from csv : <UploadCSV setData={setCSVdata}/>
+            </div>
+
+
             <div>
                 Note Name<input type="text" value={data.note_name} onChange={(e)=>{
                     setData({...data,note_name:e.target.value})
@@ -160,20 +377,29 @@ function EditNote(props){
                 >Change</button>
             </div>
 
+            <div style={{border:"1px solid black"}}>
+                Upload File : <UploadProfilePic note_id={data.note_id} setData={setAddFile} />
+            </div>
 
             <div>
                 <div>
                     Data : 
-                    <textarea style={{minHeight:"10rem",minWidth:"40rem"}} value={data.note_data}
+                    <textarea style={{minHeight:"10rem",minWidth:"40rem"}} 
+                        value={data.note_data}
                         onChange={(e)=>{
-                            e.preventDefault();
-                            setData({...data,note_data:data.note_data})
+                            // e.preventDefault();
+                            setData({...data,note_data:e.target.value})
                         }}
                     >
 
                     </textarea>
                 </div>
             </div>
+
+            <button onClick={save}>Save</button>
+            <button onClick={saveToDraft}>Draft</button>
+            <button onClick={loadDraft}>Load Draft</button>
+
             <hr/>
             <div>
                 Preview <ShowNote {...data} />
@@ -182,6 +408,8 @@ function EditNote(props){
         </div>
     )
 }
+
+
 
 
 export default Note;

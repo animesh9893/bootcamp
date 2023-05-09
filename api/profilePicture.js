@@ -54,9 +54,12 @@ function SetProfileImageRoute(req, res) {
     const { file } = req.body;
     const filePath = req.file.path;
 
+    console.log(filePath)
+    console.log()
+
     const id = GetUserId(req);
 
-    USER.Function.UpdateUser(id, "", "", "", filePath)
+    USER.Function.UpdateUser(id, "", "", "", filePath.split("uploads")[0])
       .then(() => {
         res
           .status(200)
@@ -86,6 +89,7 @@ function IsFileExist(path) {
 }
 
 function GetProfileImageRoute(req, res) {
+  console.log("GET USER PROFILE")
   const userId = req.params.user;
   const imagePath = `${path.resolve(
     __dirname,

@@ -29,6 +29,7 @@ function Note(props){
     return (
         <>
             <div onClick={()=>navigate(`/note/${props?.note_id || "notAvailable"}`)} style={{border:"1px solid black"}}>
+                <div>{props?.note_id}</div>
                 <div>{props?.note_name}</div>
                 <div>{props?.note_data}</div>
             </div>
@@ -43,28 +44,28 @@ function Home(props){
     const navigate = useNavigate();
 
     const [notes,setNotes] = useState([]);
+    const [noteIds,setNoteIds] = useState([]);
 
     useEffect(()=>{
         const obj = JSON.parse(localStorage.getItem("data"))
 
-        axios.get(`${BASE_URL}/note/public`,{
+        axios.post(`${BASE_URL}/note/sharedNote`,{
+            userId:obj.id,
+        },{
             headers:{
                 "Authorization":`Bearer ${obj.id} ${obj.token}`
             }
         }).then((result)=>{
-            // console.log(result)
-            setNotes(result.data.data || []);
+            console.log("SHARED ",result)
+            setNoteIds(result.data.data);
         })
-
-        console.log("data",notes)
     },[])
-
 
     return (
         <div>
             <div>Public Note</div>
             {
-                notes.map((item)=>(
+                noteIds.map((item)=>(
                     <Note key={item.note_id || "1"} {...item} />
                 ))
             }
