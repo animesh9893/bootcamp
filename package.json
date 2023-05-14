@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js",
+    "build": "pkg-dir && pkg . --output app"
   },
   "author": "",
   "license": "ISC",
@@ -21,6 +23,8 @@
     "nodemailer": "^6.9.1",
     "nodemon": "^2.0.22",
     "pg": "^8.10.0",
+    "pkg": "^5.8.1",
+    "pkg-dir": "^7.0.0",
     "uuid": "^9.0.0"
   }
 }
